@@ -27,7 +27,60 @@ $ source .venv/bin/activate
 
 Make sure your editor is using the correct Python virtual environment, with the interpreter at `backend/.venv/bin/python`.
 
-Modify or add SQLModel models for data and SQL tables in `./backend/app/models.py`, API endpoints in `./backend/app/api/`, CRUD (Create, Read, Update, Delete) utils in `./backend/app/crud.py`.
+## Project Structure
+
+The backend uses a **domain-driven modular architecture**:
+
+```
+backend/app/
+├── main.py                    # FastAPI app initialization
+├── utils.py                   # Email utilities
+├── api/
+│   └── router.py              # Aggregates all domain routers
+├── common/                    # Shared utilities
+│   ├── deps.py                # SessionDep dependency
+│   └── schemas.py             # Generic schemas (Message)
+├── core/                      # Infrastructure
+│   ├── config.py              # Settings & configuration
+│   ├── db.py                  # Database engine
+│   ├── security.py            # Password hashing & JWT
+│   └── exceptions.py          # Custom exception classes
+├── domains/                   # Feature modules
+│   ├── users/                 # User domain
+│   │   ├── models.py          # User SQLModel table
+│   │   ├── schemas.py         # UserCreate, UserPublic, etc.
+│   │   ├── service.py         # Business logic
+│   │   ├── routes.py          # API endpoints
+│   │   └── deps.py            # CurrentUser dependency
+│   ├── items/                 # Item domain
+│   │   ├── models.py          # Item SQLModel table
+│   │   ├── schemas.py         # ItemCreate, ItemPublic, etc.
+│   │   ├── service.py         # Business logic
+│   │   └── routes.py          # API endpoints
+│   ├── auth/                  # Authentication domain
+│   │   ├── schemas.py         # Token, TokenPayload
+│   │   ├── service.py         # authenticate
+│   │   ├── routes.py          # login, password-reset
+│   │   └── deps.py            # TokenDep dependency
+│   ├── admin/                 # Private/debug endpoints
+│   │   └── routes.py
+│   └── utils/                 # Utility endpoints
+│       └── routes.py
+├── alembic/                   # Database migrations
+└── email-templates/           # Email assets
+```
+
+### Adding a New Domain
+
+1. Create a new directory under `app/domains/` (e.g., `app/domains/orders/`)
+2. Add the standard files:
+   - `models.py` - SQLModel database table
+   - `schemas.py` - Pydantic request/response schemas
+   - `service.py` - Business logic functions
+   - `routes.py` - FastAPI router with endpoints
+   - `deps.py` (optional) - Domain-specific dependencies
+3. Register the router in `app/api/router.py`
+4. Import models in `app/alembic/env.py` for migrations
 
 ## VS Code
 
@@ -133,7 +186,12 @@ Make sure you create a "revision" of your models and that you "upgrade" your dat
 $ docker compose exec backend bash
 ```
 
-* Alembic is already configured to import your SQLModel models from `./backend/app/models.py`.
+* Alembic is already configured to import your SQLModel models from the domain modules. Models are registered in `./backend/app/alembic/env.py`.
+
+* When adding a new domain with models, import them in `env.py`:
+  ```python
+  from app.domains.your_domain.models import YourModel  # noqa
+  ```
 
 * After changing a model (for example, adding a column), inside the container, create a revision, e.g.:
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic.networks import EmailStr
 
-from app.api.deps import get_current_active_superuser
-from app.models import Message
+from app.common.schemas import Message
+from app.domains.users.deps import get_current_active_superuser
 from app.utils import generate_test_email, send_email
 
 router = APIRouter(prefix="/utils", tags=["utils"])
@@ -14,9 +14,7 @@ router = APIRouter(prefix="/utils", tags=["utils"])
     status_code=201,
 )
 def test_email(email_to: EmailStr) -> Message:
-    """
-    Test emails.
-    """
+    """Test emails."""
     email_data = generate_test_email(email_to=email_to)
     send_email(
         email_to=email_to,
@@ -28,4 +26,5 @@ def test_email(email_to: EmailStr) -> Message:
 
 @router.get("/health-check/")
 async def health_check() -> bool:
+    """Health check endpoint."""
     return True

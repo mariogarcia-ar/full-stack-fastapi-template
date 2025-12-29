@@ -4,8 +4,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
-from app.api.deps import CurrentUser, SessionDep
-from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
+from app.common.deps import SessionDep
+from app.common.schemas import Message
+from app.domains.items.models import Item
+from app.domains.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
+from app.domains.users.deps import CurrentUser
 
 router = APIRouter(prefix="/items", tags=["items"])
 
@@ -14,10 +17,7 @@ router = APIRouter(prefix="/items", tags=["items"])
 def read_items(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
 ) -> Any:
-    """
-    Retrieve items.
-    """
-
+    """Retrieve items."""
     if current_user.is_superuser:
         count_statement = select(func.count()).select_from(Item)
         count = session.exec(count_statement).one()
@@ -43,9 +43,7 @@ def read_items(
 
 @router.get("/{id}", response_model=ItemPublic)
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
-    """
-    Get item by ID.
-    """
+    """Get item by ID."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -58,9 +56,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
-    """
-    Create new item.
-    """
+    """Create new item."""
     item = Item.model_validate(item_in, update={"owner_id": current_user.id})
     session.add(item)
     session.commit()
@@ -76,9 +72,7 @@ def update_item(
     id: uuid.UUID,
     item_in: ItemUpdate,
 ) -> Any:
-    """
-    Update an item.
-    """
+    """Update an item."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -96,9 +90,7 @@ def update_item(
 def delete_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
-    """
-    Delete an item.
-    """
+    """Delete an item."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
