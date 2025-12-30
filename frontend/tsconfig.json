@@ -19,7 +19,23 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/api": ["./src/api/index.ts"],
+      "@/api/*": ["./src/api/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/common": ["./src/components/common/index.ts"],
+      "@/features/*": ["./src/components/features/*"],
+      "@/layout": ["./src/components/layout/index.ts"],
+      "@/ui/*": ["./src/components/ui/*"],
+      "@/config": ["./src/config/index.ts"],
+      "@/config/*": ["./src/config/*"],
+      "@/hooks": ["./src/hooks/index.ts"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/providers": ["./src/providers/index.ts"],
+      "@/types": ["./src/types/index.ts"],
+      "@/utils": ["./src/utils/index.ts"],
+      "@/utils/*": ["./src/utils/*"]
     }
   },
   "include": ["src", "tests", "playwright.config.ts"],
