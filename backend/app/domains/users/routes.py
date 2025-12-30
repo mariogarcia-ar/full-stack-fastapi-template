@@ -1,9 +1,12 @@
+"""User domain API routes."""
+
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import col, delete, func, select
+from sqlmodel import col, delete
 
+from app.common.auth import require_not_self, require_superuser
 from app.common.deps import SessionDep
 from app.common.schemas import Message
 from app.core.config import settings
@@ -21,6 +24,7 @@ from app.domains.users.schemas import (
     UserUpdate,
     UserUpdateMe,
 )
+from app.domains.users.service import user_service
 from app.utils import generate_new_account_email, send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -33,12 +37,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 )
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """Retrieve users."""
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
-
-    statement = select(User).offset(skip).limit(limit)
-    users = session.exec(statement).all()
-
+    count = user_service.count(session)
+    users = user_service.get_multi(session, skip=skip, limit=limit)
     return UsersPublic(data=users, count=count)
 
 
@@ -144,11 +144,7 @@ def read_user_by_id(
     user = session.get(User, user_id)
     if user == current_user:
         return user
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403,
-            detail="The user doesn't have enough privileges",
-        )
+    require_superuser(current_user)
     return user
 
 
@@ -177,8 +173,7 @@ def update_user(
                 status_code=409, detail="User with this email already exists"
             )
 
-    db_user = service.update_user(session=session, db_user=db_user, user_in=user_in)
-    return db_user
+    return service.update_user(session=session, db_user=db_user, user_in=user_in)
 
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
@@ -189,10 +184,9 @@ def delete_user(
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if user == current_user:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
-        )
+    require_not_self(
+        user_id, current_user, "Super users are not allowed to delete themselves"
+    )
     statement = delete(Item).where(col(Item.owner_id) == user_id)
     session.exec(statement)  # type: ignore
     session.delete(user)

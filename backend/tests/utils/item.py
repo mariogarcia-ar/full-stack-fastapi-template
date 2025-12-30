@@ -2,7 +2,7 @@ from sqlmodel import Session
 
 from app.domains.items.models import Item
 from app.domains.items.schemas import ItemCreate
-from app.domains.items import service as item_service
+from app.domains.items.service import item_service
 from tests.utils.user import create_random_user
 from tests.utils.utils import random_lower_string
 
@@ -14,4 +14,4 @@ def create_random_item(db: Session) -> Item:
     title = random_lower_string()
     description = random_lower_string()
     item_in = ItemCreate(title=title, description=description)
-    return item_service.create_item(session=db, item_in=item_in, owner_id=owner_id)
+    return item_service.create_with_owner(db, item_in=item_in, owner_id=owner_id)
