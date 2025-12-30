@@ -113,14 +113,30 @@ Then, when you run the frontend, it will use that URL as the base URL for the AP
 
 ## Code Structure
 
-The frontend code is structured as follows:
+The frontend uses a feature-based architecture:
 
-* `frontend/src` - The main frontend code.
-* `frontend/src/assets` - Static assets.
-* `frontend/src/client` - The generated OpenAPI client.
-* `frontend/src/components` -  The different components of the frontend.
-* `frontend/src/hooks` - Custom hooks.
-* `frontend/src/routes` - The different routes of the frontend which include the pages.
+```
+src/
+├── api/                    # API layer (queries, mutations, keys)
+├── client/                 # Auto-generated OpenAPI client
+├── components/
+│   ├── ui/                 # shadcn/ui primitives
+│   ├── common/             # Shared components (DataTable, form fields, dialogs)
+│   ├── layout/             # Sidebar, footer, auth layout
+│   └── features/           # Feature modules (admin, items, settings)
+├── config/                 # Constants, routes, environment
+├── hooks/                  # Custom hooks (useAuth, useCrudMutation, etc.)
+├── lib/                    # Utilities (cn function)
+├── providers/              # Context providers (theme, query)
+├── routes/                 # TanStack Router pages
+├── types/                  # Shared TypeScript types
+└── utils/                  # Helper functions
+```
+
+**Conventions:**
+- File/folder naming: `kebab-case`
+- Use barrel exports: `import { DataTable } from "@/components/common"`
+- Query keys: use factory from `@/api/keys`
 
 ## End-to-End Testing with Playwright
 
